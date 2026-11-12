@@ -1,3 +1,4 @@
+
 /**
  * Represents a Connect Four piece, using 'r' for red and 'b' for black.
  * Empty board cells are represented by null, without a Token object.
