@@ -4,7 +4,7 @@ import java.util.Map;
 /**
  * A Connect Four board with 6 rows and 7 columns. Empty cells contain null.
  * Stores cell contents and provides a console display. Game rules belong in
- * GameEngine, future GUI can read cell contents through getToken().
+ * GameEngine.
  */
 public class GameBoard {
 
@@ -12,28 +12,28 @@ public class GameBoard {
     public static final int COLUMNS = 7;
 
     final Token[][] board; 
-    private final Map<Character, String> tokenSymbols = new HashMap<>(); // Color to emoji
+    private final Map<Integer, String> tokenSymbols = new HashMap<>(); // Color to emoji
 
     // Creates an empty board
     public GameBoard() {
         // 6 rows (0-5, top to bottom) by 7 columns (0-6, left to right)
         // [row][col] -> board[0][0] is top-left, board[5][6] is bottom-right
         board = new Token[ROWS][COLUMNS];
-        tokenSymbols.put('b', "⚫");
-        tokenSymbols.put('r', "🔴");
+        tokenSymbols.put(Token.BLACK, "⚫");
+        tokenSymbols.put(Token.RED, "🔴");
         tokenSymbols.put(null, "⚪");
     }
 
     /**
-     * Prints the board from top to bottom, with one line per row and no spaces.
-     * Black and red tokens use matching circles; empty cells use white circles.
+     * Prints board in terminal from top to bottom, with one line per row and no spaces.
+     * Black and red tokens use matching circles. Empty cells use white circles.
      */
     public void display() {
         for (int row = 0; row < ROWS; row++) {
             for (int column = 0; column < COLUMNS; column++) {
                 // assign token color
                 Token token = board[row][column];
-                Character color;
+                Integer color;
                 if(token == null)
                     color = null;
                 else
@@ -57,10 +57,23 @@ public class GameBoard {
         return board[row][column];
     }
 
+    /** Drops a token into the lowest empty cell. Returns its row, or -1 if full. */
+    public int dropToken(int column, Token token) {
+        checkColumn(column);
+
+        for (int row = ROWS - 1; row >= 0; row--) {
+            if (board[row][column] == null) {
+                board[row][column] = token;
+                return row;
+            }
+        }
+        return -1;
+    }
+
     /** Checks that both indices fall within the board. */
     private void checkPosition(int row, int column) {
         if (row < 0 || row >= ROWS) {
-            throw new IllegalArgumentException("Row must be between 0 and 5.");
+            throw new IllegalArgumentException("Row must be between 0 and " + Integer.toString(ROWS) + ".");
         }
         checkColumn(column);
     }
@@ -68,7 +81,7 @@ public class GameBoard {
     /** Checks that a column index falls within the board. */
     private void checkColumn(int column) {
         if (column < 0 || column >= COLUMNS) {
-            throw new IllegalArgumentException("Column must be between 0 and 6.");
+            throw new IllegalArgumentException("Column must be between 0 and " + Integer.toString(COLUMNS) + ".");
         }
     }
 }

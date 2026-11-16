@@ -10,7 +10,7 @@ Build:
 mvn clean package
 ```
 
-Run the JavaFX shapes example:
+Run the JavaFX Connect Four board:
 
 ```sh
 mvn javafx:run
@@ -19,11 +19,17 @@ mvn javafx:run
 JavaFX controls and FXML dependencies are included using the
 [OpenJFX Maven setup](https://openjfx.io/openjfx-docs/#maven).
 The default entry point is `Launcher`, in `src/main/java/Launcher.java`.
-It starts `javafx_example`, which opens a window with
-a blue ellipse and "My Shapes" text. The Connect Four UI is still to be implemented.
+It starts `ConnectFourGUI`, which displays a 6-by-7 board. Hover over a column
+to preview the current player's token above it, then click to drop it into the
+lowest empty cell. The preview updates to the next player's color after a move. Turns
+alternate between red and black; full columns do not accept tokens. Win detection
+is not implemented yet. Use **New board** to clear the board.
+
+The original shapes example is still available with
+`mvn javafx:run -Dapp.mainClass=javafx_example`.
 Run the console board demo with `mvn javafx:run -Dapp.mainClass=Runner`.
-The existing Javalin server remains in `Main`; run it with
-`mvn javafx:run -Dapp.mainClass=Main` (port 7070).
+`Main` contains a commented-out Javalin server stub; it does not currently start
+a web server.
 
 If your IDE reports "JavaFX runtime components are missing", reload the Maven
 project so its JavaFX dependencies are included, then run `Launcher.main()`.
