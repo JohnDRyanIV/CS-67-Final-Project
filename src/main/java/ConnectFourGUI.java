@@ -119,9 +119,24 @@ public class ConnectFourGUI extends Application {
     /** Requests a move, reports whether it succeeded, and redraws the current state. */
     private void placeToken(int column) {
         if (engine.placeToken(column)) {
-            feedback.setText("Token placed in column " + (column + 1) + ".");
+            switch (engine.gameState()) {
+                case 1:
+                    feedback.setText("Red Won!");
+                    break;
+                case -1:
+                    feedback.setText("Black won!");
+                    break;
+                case 0:
+                    feedback.setText("Draw");
+                    break;
+                case null:
+                    feedback.setText("Token placed in column " + (column + 1) + ".");
+                    break;
+                default:
+                    break;
+            }
         } else {
-            feedback.setText("Column " + (column + 1) + " is full. Choose another column.");
+            feedback.setText("Column " + (column + 1) + " is full or game is over.");
         }
         refreshBoard();
     }

@@ -1,5 +1,8 @@
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
 
 /**
  * A Connect Four board with 6 rows and 7 columns. Empty cells contain null.
@@ -22,6 +25,39 @@ public class GameBoard {
         tokenSymbols.put(Token.BLACK, "⚫");
         tokenSymbols.put(Token.RED, "🔴");
         tokenSymbols.put(null, "⚪");
+    }
+
+    /**
+     * Get all windows on which to check for wins.
+     * This returns an ArrayList of integers that represent the indices on
+     * a flattened grid. To convert back to (row, col), (row = x % width, col = x/width)
+     */
+    public ArrayList<int[]> windows(){
+        ArrayList<int[]> out = new ArrayList<>();
+
+        for (int r=0; r<ROWS; r++){
+            // int idx = r * COLUMNS;
+            for (int c=0; c<COLUMNS; c++){
+                int idx = r*COLUMNS+c;
+                // 1. Top to Bottom
+                if (r+3<ROWS){
+                    out.add(new int[]{idx, idx+COLUMNS, idx+2*COLUMNS, idx+3*COLUMNS});
+                }
+                // 2. Left to Right (rows)
+                if (c+3 < COLUMNS){
+                    out.add(new int[]{idx, idx+1, idx+2, idx+3});
+                }
+                // 3. Digonal top-left to bottom-right
+                if (idx+(COLUMNS+1)*3 < ROWS * COLUMNS-1){
+                    out.add(new int[]{idx, idx+1+COLUMNS, idx+(1+COLUMNS)*2, idx+(1+COLUMNS)*3});
+                }
+                // 4. Diagonal Top-right to Bottom-left
+                if (c>=3 && idx+(COLUMNS-1)*3 < ROWS * COLUMNS - 1){
+                    out.add(new int[]{idx, idx-1+COLUMNS, idx+(COLUMNS-1)*2, idx+(COLUMNS-1)*3});
+                }
+            }
+        }
+        return out;
     }
 
     /**
