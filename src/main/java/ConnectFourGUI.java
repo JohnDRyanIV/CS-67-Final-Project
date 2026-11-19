@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javafx.application.Application;
@@ -26,11 +28,13 @@ import javafx.stage.Stage;
  * window controls.
  */
 public class ConnectFourGUI extends Application {
-    private final GameEngine engine = new GameEngine();
+    //private final GameEngine engine = new GameEngine();
+    private GameEngine engine;
+    private Circle[][] cells;
     private final Map<Integer, String> tokenColors = new HashMap<>();
     // Keep references to the shapes so moves can update the existing
     // view without rebuilding the entire window. Cell indices match GameBoard.
-    private final Circle[][] cells = new Circle[engine.getBoard().getNumRows()][engine.getBoard().getNumColumns()];
+    //private final Circle[][] cells = new Circle[engine.getBoard().getNumRows()][engine.getBoard().getNumColumns()];
     private final Circle hoverToken = new Circle(27);
     private final StackPane hoverSlot = new StackPane(hoverToken);
     private final GridPane grid = new GridPane();
@@ -43,6 +47,34 @@ public class ConnectFourGUI extends Application {
         tokenColors.put(Token.RED, "#dc143c");
         tokenColors.put(Token.BLACK, "#222222");
         tokenColors.put(null, "#ffffff");
+    }
+
+    @Override
+    public void init() {
+
+        List<String> args = getParameters().getUnnamed();
+        // Default dimension when no arguments are supplied
+        int rows = 6;
+        int columns = 7;
+
+        if(!args.isEmpty()) {
+            if(args.size() != 2) {
+                throw new IllegalArgumentException(
+                    "Expected two arguments: rows & columns."
+                );
+            }
+            rows = Integer.parseInt(args.get(0));
+            columns = Integer.parseInt(args.get(1));
+
+            if(rows < 4 || columns < 4) {
+                throw new IllegalArgumentException(
+                    "Rows and columns much each be at least 4. It is Connect 4, after all."
+                );
+            }
+
+        }
+        engine = new GameEngine(rows, columns);
+        cells = new Circle[rows][columns];
     }
 
     /** JavaFX calls this once to build and show the application's main window. */
@@ -58,7 +90,7 @@ public class ConnectFourGUI extends Application {
         HBox toolbar = new HBox(12, reset, status);
         toolbar.setAlignment(Pos.CENTER_LEFT);
 
-        // Row 0 reserves space for a token preview; rows 1–6 are board cells.
+        // Row 0 reserves space for a token preview; rows 1–x are board cells.
         grid.setAlignment(Pos.CENTER);
         grid.setHgap(6);
         grid.setVgap(6);

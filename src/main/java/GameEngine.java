@@ -2,7 +2,12 @@
  * Owns the board and will coordinate game rules
  */
 public class GameEngine {
-    private GameBoard board = new GameBoard(6, 7);
+
+    private GameBoard board;
+    public GameEngine(int rows, int columns) {
+        board = new GameBoard(rows, columns);
+    }
+ 
     private int currentPlayer = Token.RED;
 
     /** Returns this game's board for reading cell contents or displaying it. */

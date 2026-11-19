@@ -18,8 +18,8 @@ public class GameBoard {
 
     // Creates an empty board
     public GameBoard(int rows, int columns) {
-        // 6 rows (0-5, top to bottom) by 7 columns (0-6, left to right)
-        // [row][col] -> board[0][0] is top-left, board[5][6] is bottom-right
+        // x rows (0->x-1, top to bottom) by y columns (0-y-1, left to right)
+        // [row][col] -> board[0][0] is top-left, board[x-1][y-1] is bottom-right
         setNumRows(rows);
         setNumColumns(columns);
         board = new Token[getNumRows()][getNumColumns()];
@@ -84,8 +84,8 @@ public class GameBoard {
     /**
      * Returns the token in a cell, or null if the cell is empty.
      * Check for null before accessing or changing the returned token.
-     * @param row row index, from 0 (top) to 5 (bottom)
-     * @param column column index, from 0 (left) to 6 (right)
+     * @param row row index, from 0 (top) to x-1 (bottom)
+     * @param column column index, from 0 (left) to y-1 (right)
      * @return the token at the requested position, or null for an empty cell
      * @throws IllegalArgumentException if either index is outside the board
      */
