@@ -2,7 +2,7 @@
  * Owns the board and will coordinate game rules
  */
 public class GameEngine {
-    private GameBoard board = new GameBoard();
+    private GameBoard board = new GameBoard(6, 7);
     private int currentPlayer = Token.RED;
 
     /** Returns this game's board for reading cell contents or displaying it. */
@@ -34,7 +34,7 @@ public class GameEngine {
 
     /** Starts a new game with an empty board and red playing first. */
     public void reset() {
-        board = new GameBoard();
+        board = new GameBoard(6, 7);
         currentPlayer = Token.RED;
     }
 
@@ -47,7 +47,7 @@ public class GameEngine {
         for (int[] window: board.windows()){
             int tot = 0;
             for (int idx: window){
-                int r = idx / GameBoard.COLUMNS, c = idx % GameBoard.COLUMNS;
+                int r = idx / board.getNumColumns(), c = idx % board.getNumColumns();
                 Token tok = board.getToken(r, c);
                 if (tok == null){
                     break;
@@ -61,7 +61,7 @@ public class GameEngine {
             }
         }
         // Board not full
-        for (int r=0; r<GameBoard.ROWS; r++){
+        for (int r=0; r<board.getNumRows(); r++){
             if (board.getToken(r, 0) == null){
                 return null;
             }

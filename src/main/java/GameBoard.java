@@ -1,27 +1,28 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 
 /**
- * A Connect Four board with 6 rows and 7 columns. Empty cells contain null.
- * Stores cell contents and provides a console display. Game rules belong in
- * GameEngine.
+ * A Connect Four board with a user-defined number of rows and columns. Empty cells 
+ * contain null. Stores cell contents and provides a console display. Game rules
+ * belong in GameEngine.
  */
 public class GameBoard {
 
-    public static final int ROWS = 6;
-    public static final int COLUMNS = 7;
+    private int rows;
+    private int columns;
 
     final Token[][] board; 
     private final Map<Integer, String> tokenSymbols = new HashMap<>(); // Color to emoji
 
     // Creates an empty board
-    public GameBoard() {
+    public GameBoard(int rows, int columns) {
         // 6 rows (0-5, top to bottom) by 7 columns (0-6, left to right)
         // [row][col] -> board[0][0] is top-left, board[5][6] is bottom-right
-        board = new Token[ROWS][COLUMNS];
+        setNumRows(rows);
+        setNumColumns(columns);
+        board = new Token[getNumRows()][getNumColumns()];
         tokenSymbols.put(Token.BLACK, "⚫");
         tokenSymbols.put(Token.RED, "🔴");
         tokenSymbols.put(null, "⚪");
@@ -35,25 +36,25 @@ public class GameBoard {
     public ArrayList<int[]> windows(){
         ArrayList<int[]> out = new ArrayList<>();
 
-        for (int r=0; r<ROWS; r++){
-            // int idx = r * COLUMNS;
-            for (int c=0; c<COLUMNS; c++){
-                int idx = r*COLUMNS+c;
+        for (int r=0; r<getNumRows(); r++){
+            // int idx = r * getNumColumns();
+            for (int c=0; c<getNumColumns(); c++){
+                int idx = r*getNumColumns()+c;
                 // 1. Top to Bottom
-                if (r+3<ROWS){
-                    out.add(new int[]{idx, idx+COLUMNS, idx+2*COLUMNS, idx+3*COLUMNS});
+                if (r+3<getNumRows()){
+                    out.add(new int[]{idx, idx+getNumColumns(), idx+2*getNumColumns(), idx+3*getNumColumns()});
                 }
                 // 2. Left to Right (rows)
-                if (c+3 < COLUMNS){
+                if (c+3 < getNumColumns()){
                     out.add(new int[]{idx, idx+1, idx+2, idx+3});
                 }
                 // 3. Digonal top-left to bottom-right
-                if (idx+(COLUMNS+1)*3 < ROWS * COLUMNS-1){
-                    out.add(new int[]{idx, idx+1+COLUMNS, idx+(1+COLUMNS)*2, idx+(1+COLUMNS)*3});
+                if (idx+(getNumColumns()+1)*3 < getNumRows() * getNumColumns()-1){
+                    out.add(new int[]{idx, idx+1+getNumColumns(), idx+(1+getNumColumns())*2, idx+(1+getNumColumns())*3});
                 }
                 // 4. Diagonal Top-right to Bottom-left
-                if (c>=3 && idx+(COLUMNS-1)*3 < ROWS * COLUMNS - 1){
-                    out.add(new int[]{idx, idx-1+COLUMNS, idx+(COLUMNS-1)*2, idx+(COLUMNS-1)*3});
+                if (c>=3 && idx+(getNumColumns()-1)*3 < getNumRows() * getNumColumns() - 1){
+                    out.add(new int[]{idx, idx-1+getNumColumns(), idx+(getNumColumns()-1)*2, idx+(getNumColumns()-1)*3});
                 }
             }
         }
@@ -65,8 +66,8 @@ public class GameBoard {
      * Black and red tokens use matching circles. Empty cells use white circles.
      */
     public void display() {
-        for (int row = 0; row < ROWS; row++) {
-            for (int column = 0; column < COLUMNS; column++) {
+        for (int row = 0; row < getNumRows(); row++) {
+            for (int column = 0; column < getNumColumns(); column++) {
                 // assign token color
                 Token token = board[row][column];
                 Integer color;
@@ -97,7 +98,7 @@ public class GameBoard {
     public int dropToken(int column, Token token) {
         checkColumn(column);
 
-        for (int row = ROWS - 1; row >= 0; row--) {
+        for (int row = getNumRows() - 1; row >= 0; row--) {
             if (board[row][column] == null) {
                 board[row][column] = token;
                 return row;
@@ -108,16 +109,32 @@ public class GameBoard {
 
     /** Checks that both indices fall within the board. */
     private void checkPosition(int row, int column) {
-        if (row < 0 || row >= ROWS) {
-            throw new IllegalArgumentException("Row must be between 0 and " + Integer.toString(ROWS) + ".");
+        if (row < 0 || row >= getNumRows()) {
+            throw new IllegalArgumentException("Row must be between 0 and " + Integer.toString(getNumRows()) + ".");
         }
         checkColumn(column);
     }
 
     /** Checks that a column index falls within the board. */
     private void checkColumn(int column) {
-        if (column < 0 || column >= COLUMNS) {
-            throw new IllegalArgumentException("Column must be between 0 and " + Integer.toString(COLUMNS) + ".");
+        if (column < 0 || column >= getNumColumns()) {
+            throw new IllegalArgumentException("Column must be between 0 and " + Integer.toString(getNumColumns()) + ".");
         }
+    }
+
+    public int getNumRows() {
+        return this.rows;
+    }
+
+    private void setNumRows(int rows) {
+        this.rows = rows;
+    }
+
+    public int getNumColumns() {
+        return this.columns;
+    }
+
+    private void setNumColumns(int columns) {
+        this.columns = columns;
     }
 }

@@ -30,7 +30,7 @@ public class ConnectFourGUI extends Application {
     private final Map<Integer, String> tokenColors = new HashMap<>();
     // Keep references to the shapes so moves can update the existing
     // view without rebuilding the entire window. Cell indices match GameBoard.
-    private final Circle[][] cells = new Circle[GameBoard.ROWS][GameBoard.COLUMNS];
+    private final Circle[][] cells = new Circle[engine.getBoard().getNumRows()][engine.getBoard().getNumColumns()];
     private final Circle hoverToken = new Circle(27);
     private final StackPane hoverSlot = new StackPane(hoverToken);
     private final GridPane grid = new GridPane();
@@ -69,14 +69,14 @@ public class ConnectFourGUI extends Application {
         boardBackground.setStyle("-fx-background-color: #2455a4; -fx-background-radius: 12;");
         boardBackground.setMouseTransparent(true);
         GridPane.setMargin(boardBackground, new Insets(-3, -12, -12, -12));
-        grid.add(boardBackground, 0, 1, GameBoard.COLUMNS, GameBoard.ROWS);
+        grid.add(boardBackground, 0, 1, engine.getBoard().getNumColumns(), engine.getBoard().getNumRows());
         hoverSlot.setMinSize(64, 64);
         hoverSlot.setMouseTransparent(true);
         hoverToken.setStroke(Color.web("#17386d"));
         hoverToken.setVisible(false);
         grid.add(hoverSlot, 0, 0);
-        for (int column = 0; column < GameBoard.COLUMNS; column++) {
-            for (int row = 0; row < GameBoard.ROWS; row++) {
+        for (int column = 0; column < engine.getBoard().getNumColumns(); column++) {
+            for (int row = 0; row < engine.getBoard().getNumRows(); row++) {
                 Circle cell = new Circle(27);
                 cell.setStroke(Color.web("#17386d"));
                 cells[row][column] = cell;
@@ -156,10 +156,10 @@ public class ConnectFourGUI extends Application {
         // Row 0 holds the preview, row GameBoard.ROWS is the bottom playable row.
         // These corner cells define the active area
         Bounds first = grid.getCellBounds(0, 0);
-        Bounds last = grid.getCellBounds(GameBoard.COLUMNS - 1, GameBoard.ROWS);
+        Bounds last = grid.getCellBounds(engine.getBoard().getNumColumns() - 1, engine.getBoard().getNumRows());
         if (mouse.getX() >= first.getMinX() && mouse.getX() <= last.getMaxX()
                 && mouse.getY() >= first.getMinY() && mouse.getY() <= last.getMaxY()) {
-            for (int column = 0; column < GameBoard.COLUMNS; column++) {
+            for (int column = 0; column < engine.getBoard().getNumColumns(); column++) {
                 Bounds bounds = grid.getCellBounds(column, 0);
                 // Assign half of each horizontal gap to the neighboring column
                 // so the preview still appears when the mouse is between cells.
@@ -182,9 +182,9 @@ public class ConnectFourGUI extends Application {
     private void refreshBoard() {
         // Assume the board is full until at least one empty cell is found.
         boolean full = true;
-        for (int column = 0; column < GameBoard.COLUMNS; column++) {
+        for (int column = 0; column < engine.getBoard().getNumColumns(); column++) {
             boolean columnFull = true;
-            for (int row = 0; row < GameBoard.ROWS; row++) {
+            for (int row = 0; row < engine.getBoard().getNumRows(); row++) {
                 Token token = engine.getBoard().getToken(row, column);
                 // Empty cells are white, occupied cells use the token's color.
                 Integer player = null;
