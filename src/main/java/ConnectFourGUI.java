@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -56,24 +56,31 @@ public class ConnectFourGUI extends Application {
         // Default dimension when no arguments are supplied
         int rows = 6;
         int columns = 7;
+        int connect = 4; // Default connect value for Connect Four
 
         if(!args.isEmpty()) {
-            if(args.size() != 2) {
+            if(args.size() != 3) {
                 throw new IllegalArgumentException(
-                    "Expected two arguments: rows & columns."
+                    "Expected three arguments: rows, columns, and connect."
                 );
             }
             rows = Integer.parseInt(args.get(0));
             columns = Integer.parseInt(args.get(1));
+            connect = Integer.parseInt(args.get(2));
 
             if(rows < 4 || columns < 4) {
                 throw new IllegalArgumentException(
                     "Rows and columns much each be at least 4. It is Connect 4, after all."
                 );
             }
+            if(connect < 3 || connect > Math.min(rows, columns)) {
+                throw new IllegalArgumentException(
+                    "Connect value must be at least 3 and at most the smaller of rows and columns."
+                );
+            }
 
         }
-        engine = new GameEngine(rows, columns);
+        engine = new GameEngine(rows, columns, connect);
         cells = new Circle[rows][columns];
     }
 
@@ -87,9 +94,83 @@ public class ConnectFourGUI extends Application {
             feedback.setText("Click a column to drop a token.");
             refreshBoard();
         });
+
+        // Sliders to adjust the board dimensions and connect value.
+        Slider rowsSlider = new Slider(4, 12, engine.getBoard().getNumRows());
+        Slider columnsSlider = new Slider(4, 12, engine.getBoard().getNumColumns());
+        Slider connectSlider = new Slider(3,
+            Math.min(engine.getBoard().getNumRows(), engine.getBoard().getNumColumns()), 4);
+        Label rowsValue = new Label();
+        Label columnsValue = new Label();
+        Label connectValue = new Label();
+        configureSlider(rowsSlider);
+        configureSlider(columnsSlider);
+        configureSlider(connectSlider);
+        Runnable updateSliderLabels = () -> {
+            rowsValue.setText(Integer.toString((int) Math.round(rowsSlider.getValue())));
+            columnsValue.setText(Integer.toString((int) Math.round(columnsSlider.getValue())));
+            connectValue.setText(Integer.toString((int) Math.round(connectSlider.getValue())));
+        };
+        Runnable updateConnectRange = () -> {
+            double maximum = Math.min(rowsSlider.getValue(), columnsSlider.getValue());
+            connectSlider.setMax(maximum);
+            if (connectSlider.getValue() > maximum) connectSlider.setValue(maximum);
+            updateSliderLabels.run();
+        };
+        rowsSlider.valueProperty().addListener((observable, oldValue, newValue) -> updateConnectRange.run());
+        columnsSlider.valueProperty().addListener((observable, oldValue, newValue) -> updateConnectRange.run());
+        connectSlider.valueProperty().addListener((observable, oldValue, newValue) -> updateSliderLabels.run());
+        updateSliderLabels.run();
+        HBox dimensionControls = new HBox(10,
+            new Label("Rows"), rowsSlider, rowsValue,
+            new Label("Columns"), columnsSlider, columnsValue,
+            new Label("Connect"), connectSlider, connectValue);
+        dimensionControls.setAlignment(Pos.CENTER_LEFT);
+        Button applyDimensions = new Button("Apply size");
+        applyDimensions.setOnAction(event -> {
+            int rows = (int) Math.round(rowsSlider.getValue());
+            int columns = (int) Math.round(columnsSlider.getValue());
+            int connect = (int) Math.round(connectSlider.getValue());
+            engine = new GameEngine(rows, columns, connect);
+            cells = new Circle[rows][columns];
+            hoveredColumn = -1;
+            feedback.setText("Click a column to drop a token.");
+            buildBoard();
+            refreshBoard();
+        });
+        
         HBox toolbar = new HBox(12, reset, status);
         toolbar.setAlignment(Pos.CENTER_LEFT);
 
+        buildBoard();
+
+        // Stack the controls and feedback above the board in the main layout.
+        VBox top = new VBox(10, toolbar, dimensionControls, applyDimensions, feedback);
+        top.setPadding(new Insets(0, 0, 14, 0));
+        BorderPane root = new BorderPane(grid);
+        root.setTop(top);
+        root.setPadding(new Insets(20));
+        root.setStyle("-fx-background-color: #eef2f7; -fx-font-size: 14px;");
+        // Apply the current model's colors and turn label before showing the stage.
+        refreshBoard();
+        stage.setTitle("Connect Four");
+        stage.setScene(new Scene(root));
+        stage.setResizable(true);
+        stage.show();
+    }
+
+    private void configureSlider(Slider slider) {
+        slider.setMajorTickUnit(2);
+        slider.setMinorTickCount(1);
+        slider.setShowTickMarks(true);
+        slider.setShowTickLabels(true);
+        slider.setSnapToTicks(true);
+        slider.setPrefWidth(115);
+    }
+
+    /** Recreates the board view after its dimensions change. */
+    private void buildBoard() {
+        grid.getChildren().clear();
         // Row 0 reserves space for a token preview; rows 1–x are board cells.
         grid.setAlignment(Pos.CENTER);
         grid.setHgap(6);
@@ -132,20 +213,6 @@ public class ConnectFourGUI extends Application {
                 placeToken(hoveredColumn);
             }
         });
-
-        // Stack the toolbar and feedback above the board in the main layout.
-        VBox top = new VBox(10, toolbar, feedback);
-        top.setPadding(new Insets(0, 0, 14, 0));
-        BorderPane root = new BorderPane(grid);
-        root.setTop(top);
-        root.setPadding(new Insets(20));
-        root.setStyle("-fx-background-color: #eef2f7; -fx-font-size: 14px;");
-        // Apply the current model's colors and turn label before showing the stage.
-        refreshBoard();
-        stage.setTitle("Connect Four");
-        stage.setScene(new Scene(root));
-        stage.setResizable(false);
-        stage.show();
     }
 
     /** Requests a move, reports whether it succeeded, and redraws the current state. */

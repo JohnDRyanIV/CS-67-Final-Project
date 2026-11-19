@@ -12,20 +12,26 @@ public class GameBoard {
 
     private int rows;
     private int columns;
+    private int connect; // Number of tokens in a row to win
 
-    final Token[][] board; 
+    private Token[][] board; 
     private final Map<Integer, String> tokenSymbols = new HashMap<>(); // Color to emoji
 
     // Creates an empty board
-    public GameBoard(int rows, int columns) {
+    public GameBoard(int rows, int columns, int connect) {
         // x rows (0->x-1, top to bottom) by y columns (0-y-1, left to right)
         // [row][col] -> board[0][0] is top-left, board[x-1][y-1] is bottom-right
         setNumRows(rows);
         setNumColumns(columns);
-        board = new Token[getNumRows()][getNumColumns()];
+        this.connect = connect;
+        board = new Token[rows][columns];
         tokenSymbols.put(Token.BLACK, "⚫");
         tokenSymbols.put(Token.RED, "🔴");
         tokenSymbols.put(null, "⚪");
+    }
+
+    public void clear(){
+        board = new Token[rows][columns];
     }
 
     /**
@@ -35,29 +41,51 @@ public class GameBoard {
      */
     public ArrayList<int[]> windows(){
         ArrayList<int[]> out = new ArrayList<>();
-
-        for (int r=0; r<getNumRows(); r++){
-            // int idx = r * getNumColumns();
-            for (int c=0; c<getNumColumns(); c++){
-                int idx = r*getNumColumns()+c;
-                // 1. Top to Bottom
-                if (r+3<getNumRows()){
-                    out.add(new int[]{idx, idx+getNumColumns(), idx+2*getNumColumns(), idx+3*getNumColumns()});
+        int offset = connect-1;
+        // 1. Vertical wins
+        for (int c=0; c<columns; c++){
+            for (int r=0; r<rows-offset; r++){
+                int idx = r*columns+c;
+                int[] window = new int[connect];
+                for (int i=0; i<connect; i++){
+                    window[i] = idx + i*columns;
                 }
-                // 2. Left to Right (rows)
-                if (c+3 < getNumColumns()){
-                    out.add(new int[]{idx, idx+1, idx+2, idx+3});
-                }
-                // 3. Digonal top-left to bottom-right
-                if (idx+(getNumColumns()+1)*3 < getNumRows() * getNumColumns()-1){
-                    out.add(new int[]{idx, idx+1+getNumColumns(), idx+(1+getNumColumns())*2, idx+(1+getNumColumns())*3});
-                }
-                // 4. Diagonal Top-right to Bottom-left
-                if (c>=3 && idx+(getNumColumns()-1)*3 < getNumRows() * getNumColumns() - 1){
-                    out.add(new int[]{idx, idx-1+getNumColumns(), idx+(getNumColumns()-1)*2, idx+(getNumColumns()-1)*3});
-                }
+                out.add(window);
             }
         }
+        // 2. Horizontal wins
+        for (int r=0; r<rows; r++){
+            for (int c=0; c<columns-offset; c++){
+                int idx = r*columns+c;
+                int[] window = new int[connect];
+                for (int i=0; i<connect; i++){
+                    window[i] = idx + i;
+                }
+                out.add(window);
+            }
+        }
+        // 3. Diagonal wins
+        for (int r=0; r<rows-offset; r++){
+            for (int c=0; c<columns-offset; c++){
+                int idx = r*columns+c;
+                int[] window = new int[connect];
+                for (int i=0; i<connect; i++){
+                    window[i] = idx + i + i*columns;
+                }
+                out.add(window);
+            }
+        }
+        for (int r=0; r<rows-offset; r++){
+            for (int c=offset; c<columns; c++){
+                int idx = r*columns+c;
+                int[] window = new int[connect];
+                for (int i=0; i<connect; i++){
+                    window[i] = idx - i + i*columns;
+                }
+                out.add(window);
+            }
+        }
+
         return out;
     }
 
@@ -66,8 +94,8 @@ public class GameBoard {
      * Black and red tokens use matching circles. Empty cells use white circles.
      */
     public void display() {
-        for (int row = 0; row < getNumRows(); row++) {
-            for (int column = 0; column < getNumColumns(); column++) {
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
                 // assign token color
                 Token token = board[row][column];
                 Integer color;
@@ -98,7 +126,7 @@ public class GameBoard {
     public int dropToken(int column, Token token) {
         checkColumn(column);
 
-        for (int row = getNumRows() - 1; row >= 0; row--) {
+        for (int row = rows - 1; row >= 0; row--) {
             if (board[row][column] == null) {
                 board[row][column] = token;
                 return row;
@@ -109,17 +137,25 @@ public class GameBoard {
 
     /** Checks that both indices fall within the board. */
     private void checkPosition(int row, int column) {
-        if (row < 0 || row >= getNumRows()) {
-            throw new IllegalArgumentException("Row must be between 0 and " + Integer.toString(getNumRows()) + ".");
+        if (row < 0 || row >= rows) {
+            throw new IllegalArgumentException("Row must be between 0 and " + Integer.toString(rows) + ".");
         }
         checkColumn(column);
     }
 
     /** Checks that a column index falls within the board. */
     private void checkColumn(int column) {
-        if (column < 0 || column >= getNumColumns()) {
-            throw new IllegalArgumentException("Column must be between 0 and " + Integer.toString(getNumColumns()) + ".");
+        if (column < 0 || column >= columns) {
+            throw new IllegalArgumentException("Column must be between 0 and " + Integer.toString(columns) + ".");
         }
+    }
+
+    public int getConnect() {
+        return this.connect;
+    }
+
+    public void setConnect(int connect) {
+        this.connect = connect;
     }
 
     public int getNumRows() {

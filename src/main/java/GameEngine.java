@@ -4,8 +4,8 @@
 public class GameEngine {
 
     private GameBoard board;
-    public GameEngine(int rows, int columns) {
-        board = new GameBoard(rows, columns);
+    public GameEngine(int rows, int columns, int connect) {
+        board = new GameBoard(rows, columns, connect);
     }
  
     private int currentPlayer = Token.RED;
@@ -39,7 +39,7 @@ public class GameEngine {
 
     /** Starts a new game with an empty board and red playing first. */
     public void reset() {
-        board = new GameBoard(6, 7);
+        board.clear();
         currentPlayer = Token.RED;
     }
 
@@ -61,8 +61,8 @@ public class GameEngine {
 
             }
 
-            if (Math.abs(tot) == 4){
-                return tot/4;
+            if (Math.abs(tot) == board.getConnect()){
+                return tot/board.getConnect();
             }
         }
         // Board not full
