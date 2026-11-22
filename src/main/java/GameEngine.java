@@ -1,5 +1,5 @@
 /**
- * Owns the board and will coordinate game rules
+ * Owns the board, coordinates game rules, and searches for moves.
  */
 public class GameEngine {
 
@@ -44,16 +44,169 @@ public class GameEngine {
     }
 
     /**
+     * Finds the current player's best column using minimax with alpha-beta pruning.
+     *
+     * @param depth maximum number of moves to search ahead
+     * @return a column, or null if depth is zero or the game is over
+     * @throws IllegalArgumentException if depth is negative
+     */
+    public Integer abSearch(int depth) {
+        if (depth < 0) {
+            throw new IllegalArgumentException("Search depth must be nonnegative.");
+        }
+        if (depth == 0 || gameState() != null) {
+            return null;
+        }
+
+        GameBoard searchBoard = board.copy();
+        double alpha = Double.NEGATIVE_INFINITY;
+        double beta = Double.POSITIVE_INFINITY;
+        double bestScore = Double.NEGATIVE_INFINITY;
+        Integer bestColumn = null;
+
+        for (int column = 0; column < searchBoard.getNumColumns(); column++) {
+            if (searchBoard.getToken(0, column) != null) {
+                continue;
+            }
+
+            int row = searchBoard.dropToken(column, new Token(currentPlayer));
+            double score;
+            try {
+                // The opponent chooses the next move, so start with a minimizing turn.
+                score = minimax(searchBoard, depth - 1, alpha, beta, currentPlayer, false);
+            } finally {
+                // Restore the board before trying another column, even if search fails.
+                searchBoard.undoDrop(row, column);
+            }
+
+            // Keep the first legal column as a fallback even if every move loses.
+            if (bestColumn == null) {
+                bestColumn = column;
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestColumn = column;
+            }
+
+            alpha = Math.max(alpha, bestScore);
+            if (alpha >= beta) {
+                break;
+            }
+        }
+        return bestColumn;
+    }
+
+    /**
+     * Scores a position using minimax with alpha-beta pruning.
+     *
+     * @param position working board for simulated moves
+     * @param depth number of moves left to search
+     * @param alpha lower score bound for the maximizing player
+     * @param beta upper score bound for the minimizing player
+     * @param player player whose score is maximized
+     * @param maximizing whether the current turn maximizes the score
+     * @return the minimax score from the specified player's perspective
+     */
+    private double minimax(GameBoard position, int depth, double alpha,
+            double beta, int player, boolean maximizing) {
+        Integer state = gameState(position);
+        if (depth == 0 || state != null) {
+            return evalBoard(position, state, player);
+        }
+
+        double value;
+        int movingPlayer;
+        if (maximizing) {
+            value = Double.NEGATIVE_INFINITY;
+            movingPlayer = player;
+        } else {
+            value = Double.POSITIVE_INFINITY;
+            movingPlayer = -player;
+        }
+
+        for (int column = 0; column < position.getNumColumns(); column++) {
+            // A column is legal when its top cell is empty.
+            if (position.getToken(0, column) != null) {
+                continue;
+            }
+
+            // Reuse the working board and undo this move before trying the next one.
+            int row = position.dropToken(column, new Token(movingPlayer));
+            double score;
+            try {
+                score = minimax(position, depth - 1, alpha, beta, player, !maximizing);
+            } finally {
+                position.undoDrop(row, column);
+            }
+
+            if (maximizing) {
+                value = Math.max(value, score);
+                alpha = Math.max(alpha, value);
+            } else {
+                value = Math.min(value, score);
+                beta = Math.min(beta, value);
+            }
+            if (alpha >= beta) {
+                break; // Remaining moves cannot improve the ancestor's choice.
+            }
+        }
+        return value;
+    }
+
+    /**
+     * Scores a finished position or delegates to the heuristic.
+     *
+     * @param position board to evaluate
+     * @param state winner's color, 0 for a draw, or null if unfinished
+     * @param player player whose perspective determines the score
+     * @return the position's score from the specified player's perspective
+     */
+    private double evalBoard(GameBoard position, Integer state, int player) {
+        if (state == null) {
+            return scorePosition(position, player);
+        }
+        if (state == 0) {
+            return 0;
+        }
+        if (state == player) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return Double.NEGATIVE_INFINITY;
+    }
+
+    /**
+     * Provides a heuristic score for an unfinished position.
+     *
+     * @param position working board to evaluate
+     * @param player player whose perspective determines the score
+     * @return a score, with positive values favoring the specified player
+     */
+    protected double scorePosition(GameBoard position, int player) {
+        // TODO: Implement heuristic
+        return 0;
+    }
+
+    /**
      * Determines the state of the game: 1 or -1 if one side wins, 0 if it's drawn
      * and null if game game isn't over yet.
      */
     public Integer gameState(){
+        return gameState(board);
+    }
+
+    /**
+     * Determines whether a position has a winner, is drawn, or is unfinished.
+     *
+     * @param position board to evaluate
+     * @return the winner's color, 0 for a draw, or null if unfinished
+     */
+    private Integer gameState(GameBoard position){
         // Get the sum of integer values of each window
-        for (int[] window: board.windows()){
+        for (int[] window: position.windows()){
             int tot = 0;
             for (int idx: window){
-                int r = idx / board.getNumColumns(), c = idx % board.getNumColumns();
-                Token tok = board.getToken(r, c);
+                int r = idx / position.getNumColumns(), c = idx % position.getNumColumns();
+                Token tok = position.getToken(r, c);
                 if (tok == null){
                     break;
                 }
@@ -61,13 +214,13 @@ public class GameEngine {
 
             }
 
-            if (Math.abs(tot) == board.getConnect()){
-                return tot/board.getConnect();
+            if (Math.abs(tot) == position.getConnect()){
+                return tot/position.getConnect();
             }
         }
         // Board not full
-        for (int r=0; r<board.getNumRows(); r++){
-            if (board.getToken(r, 0) == null){
+        for (int c=0; c<position.getNumColumns(); c++){
+            if (position.getToken(0, c) == null){
                 return null;
             }
         }

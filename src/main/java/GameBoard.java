@@ -35,6 +35,24 @@ public class GameBoard {
     }
 
     /**
+     * Creates a deep copy of this board.
+     *
+     * @return an independent board with matching settings and tokens
+     */
+    public GameBoard copy() {
+        GameBoard copy = new GameBoard(rows, columns, connect);
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                Token token = board[row][column];
+                if (token != null) {
+                    copy.board[row][column] = new Token(token.getColor());
+                }
+            }
+        }
+        return copy;
+    }
+
+    /**
      * Get all windows on which to check for wins.
      * This returns an ArrayList of integers that represent the indices on
      * a flattened grid. To convert back to (row, col), (row = x % width, col = x/width)
@@ -135,18 +153,51 @@ public class GameBoard {
         return -1;
     }
 
-    /** Checks that both indices fall within the board. */
+    /**
+     * Undoes the most recent token drop in a column.
+     *
+     * @param row row of token to remove
+     * @param column column of the token to remove
+     * @throws IllegalArgumentException if either index is outside the board
+     */
+    void undoDrop(int row, int column) {
+        // checkPosition(row, column); // debug
+        board[row][column] = null;
+    }
+
+    /**
+     * Checks that both indices fall within the board.
+     *
+     * @param row row index
+     * @param column column index
+     * @throws IllegalArgumentException if either index is outside the board
+     */
     private void checkPosition(int row, int column) {
-        if (row < 0 || row >= rows) {
-            throw new IllegalArgumentException("Row must be between 0 and " + Integer.toString(rows) + ".");
-        }
+        checkRow(row);
         checkColumn(column);
     }
 
-    /** Checks that a column index falls within the board. */
+    /**
+     * Checks that a row index falls within the board.
+     *
+     * @param row row index
+     * @throws IllegalArgumentException if the index is outside the board
+     */
+    private void checkRow(int row) {
+        if (row < 0 || row >= rows) {
+            throw new IllegalArgumentException("Row must be between 0 and " + (rows - 1) + ".");
+        }
+    }
+
+    /**
+     * Checks that a column index falls within the board.
+     *
+     * @param column column index
+     * @throws IllegalArgumentException if the index is outside the board
+     */
     private void checkColumn(int column) {
         if (column < 0 || column >= columns) {
-            throw new IllegalArgumentException("Column must be between 0 and " + Integer.toString(columns) + ".");
+            throw new IllegalArgumentException("Column must be between 0 and " + (columns - 1) + ".");
         }
     }
 
