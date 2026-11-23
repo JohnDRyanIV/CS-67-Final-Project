@@ -93,7 +93,7 @@ public class GameEngine {
                 break;
             }
         }
-        // System.out.println("Best column for player " + currentPlayer + ": " + bestColumn + " with score: " + bestScore);
+        System.out.println("Best column for player " + currentPlayer + ": " + bestColumn + " with score: " + bestScore);
         return bestColumn;
     }
 
@@ -183,7 +183,9 @@ public class GameEngine {
      */
 
     private double[] weightedWinLines(GameBoard position, int player) {
+        // The last element of the array is the number of windows that are available to either player
         double[] weights = new double[position.getNumRows() * position.getNumColumns()+1];
+
         
         // First determine how valuable each point is
         for (int[] window: position.windows()){
@@ -198,21 +200,22 @@ public class GameEngine {
                 if (tok == null){
                     continue;
                 }
-                if (side != 0 && side != tok.getColor()){
+                if (side != 0 && side/Math.abs(side) != tok.getColor()){
                     // Blocked window, no one can win here
                     weights[window[0]] -= 1;
                     break;
                 }
-                side = tok.getColor();
+                side += tok.getColor();
             }
+            weights[weights.length-1] += 1;
+            // Favor fuller windows
+            // weights[window[0]] += Math.abs(side)/position.getConnect();
             if (side == 0){
                 weights[weights.length-1] += 1; // Count the number of windows that are available
-                weights[window[0]] *= 0.1 * player; // Empty window is less valuable than a window dominated by one player
+                weights[window[0]] *= 0.1; // Empty window is less valuable than a window dominated by one player
             }
-            else if (side != player){
-                weights[window[0]] *= -player;
-            } else {
-                weights[weights.length-1] += 1;
+            else if (side/Math.abs(side) != player){
+                weights[window[0]] *= -2; // Opponent's window is bad for us
             }
         }
         return weights;
@@ -233,9 +236,6 @@ public class GameEngine {
         }
         // Normalize the score by the number of cells to keep it in a reasonable range
         return score/weights[weights.length-1];
-        // NOTE: Why from player's perspective? Shouldn't it be independent of the player?
-        // TODO: Penalize columns that result in oppenent gaining massive advantage in next turn
-        // This forsees Zugzwang situations where the player is forced to make a move that allows the opponent to win in the next turn.
     }
 
     /**

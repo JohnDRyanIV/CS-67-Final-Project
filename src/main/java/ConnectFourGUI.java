@@ -43,7 +43,7 @@ public class ConnectFourGUI extends Application {
     private final Label status = new Label();
     private final Label feedback = new Label("Click a column to drop a token.");
 
-    private int searchDepth = 10; // Default search depth for AI moves
+    private int searchDepth = 4; // Default search depth for AI moves
 
     public ConnectFourGUI() {
         tokenColors.put(Token.RED, "#dc143c");
@@ -102,7 +102,7 @@ public class ConnectFourGUI extends Application {
         Slider columnsSlider = new Slider(4, 12, engine.getBoard().getNumColumns());
         Slider connectSlider = new Slider(3,
             Math.min(engine.getBoard().getNumRows(), engine.getBoard().getNumColumns()), 4);
-        Slider depthSlider = new Slider(0, 10, 4);
+        Slider depthSlider = new Slider(2, 15, searchDepth);
         Label rowsValue = new Label();
         Label columnsValue = new Label();
         Label connectValue = new Label();
