@@ -93,6 +93,7 @@ public class GameEngine {
                 break;
             }
         }
+        // System.out.println("Best column for player " + currentPlayer + ": " + bestColumn + " with score: " + bestScore);
         return bestColumn;
     }
 
@@ -173,6 +174,49 @@ public class GameEngine {
         }
         return Double.NEGATIVE_INFINITY;
     }
+    /**
+     * Provides a heuristic score for an unfinished position,
+     * weighting each cell by how many winning lines it is part of and whether the window is blocked or dominated by one player. 
+     * @param position
+     * @param player
+     * @return
+     */
+
+    private double[] weightedWinLines(GameBoard position, int player) {
+        double[] weights = new double[position.getNumRows() * position.getNumColumns()+1];
+        
+        // First determine how valuable each point is
+        for (int[] window: position.windows()){
+            weights[window[0]] += 1;
+        }
+        // Then determine who dominates and if the window is blocked
+        for (int[] window: position.windows()){
+            int side = 0;
+            for (int idx: window){
+                int r = idx / position.getNumColumns(), c = idx % position.getNumColumns();
+                Token tok = position.getToken(r, c);
+                if (tok == null){
+                    continue;
+                }
+                if (side != 0 && side != tok.getColor()){
+                    // Blocked window, no one can win here
+                    weights[window[0]] -= 1;
+                    break;
+                }
+                side = tok.getColor();
+            }
+            if (side == 0){
+                weights[weights.length-1] += 1; // Count the number of windows that are available
+                weights[window[0]] *= 0.1 * player; // Empty window is less valuable than a window dominated by one player
+            }
+            else if (side != player){
+                weights[window[0]] *= -player;
+            } else {
+                weights[weights.length-1] += 1;
+            }
+        }
+        return weights;
+    }
 
     /**
      * Provides a heuristic score for an unfinished position.
@@ -182,8 +226,16 @@ public class GameEngine {
      * @return a score, with positive values favoring the specified player
      */
     protected double scorePosition(GameBoard position, int player) {
-        // TODO: Implement heuristic
-        return 0;
+        double[] weights = weightedWinLines(position, player);
+        double score = 0;
+        for (int i=0; i<weights.length-1; i++){
+            score += weights[i];
+        }
+        // Normalize the score by the number of cells to keep it in a reasonable range
+        return score/weights[weights.length-1];
+        // NOTE: Why from player's perspective? Shouldn't it be independent of the player?
+        // TODO: Penalize columns that result in oppenent gaining massive advantage in next turn
+        // This forsees Zugzwang situations where the player is forced to make a move that allows the opponent to win in the next turn.
     }
 
     /**

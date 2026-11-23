@@ -43,6 +43,8 @@ public class ConnectFourGUI extends Application {
     private final Label status = new Label();
     private final Label feedback = new Label("Click a column to drop a token.");
 
+    private int searchDepth = 10; // Default search depth for AI moves
+
     public ConnectFourGUI() {
         tokenColors.put(Token.RED, "#dc143c");
         tokenColors.put(Token.BLACK, "#222222");
@@ -100,16 +102,20 @@ public class ConnectFourGUI extends Application {
         Slider columnsSlider = new Slider(4, 12, engine.getBoard().getNumColumns());
         Slider connectSlider = new Slider(3,
             Math.min(engine.getBoard().getNumRows(), engine.getBoard().getNumColumns()), 4);
+        Slider depthSlider = new Slider(0, 10, 4);
         Label rowsValue = new Label();
         Label columnsValue = new Label();
         Label connectValue = new Label();
+        Label depthValue = new Label();
         configureSlider(rowsSlider);
         configureSlider(columnsSlider);
         configureSlider(connectSlider);
+        configureSlider(depthSlider);
         Runnable updateSliderLabels = () -> {
             rowsValue.setText(Integer.toString((int) Math.round(rowsSlider.getValue())));
             columnsValue.setText(Integer.toString((int) Math.round(columnsSlider.getValue())));
             connectValue.setText(Integer.toString((int) Math.round(connectSlider.getValue())));
+            depthValue.setText(Integer.toString((int) Math.round(depthSlider.getValue())));
         };
         Runnable updateConnectRange = () -> {
             double maximum = Math.min(rowsSlider.getValue(), columnsSlider.getValue());
@@ -117,14 +123,21 @@ public class ConnectFourGUI extends Application {
             if (connectSlider.getValue() > maximum) connectSlider.setValue(maximum);
             updateSliderLabels.run();
         };
+        Runnable updateSearchDepth = () -> {
+            searchDepth = (int) Math.round(depthSlider.getValue());
+            updateSliderLabels.run();
+        };
         rowsSlider.valueProperty().addListener((observable, oldValue, newValue) -> updateConnectRange.run());
         columnsSlider.valueProperty().addListener((observable, oldValue, newValue) -> updateConnectRange.run());
         connectSlider.valueProperty().addListener((observable, oldValue, newValue) -> updateSliderLabels.run());
+        depthSlider.valueProperty().addListener((observable, oldValue, newValue) -> updateSearchDepth.run());
         updateSliderLabels.run();
         HBox dimensionControls = new HBox(10,
             new Label("Rows"), rowsSlider, rowsValue,
             new Label("Columns"), columnsSlider, columnsValue,
-            new Label("Connect"), connectSlider, connectValue);
+            new Label("Connect"), connectSlider, connectValue,
+            new Label("Search depth"), depthSlider, depthValue
+        );
         dimensionControls.setAlignment(Pos.CENTER_LEFT);
         Button applyDimensions = new Button("Apply size");
         applyDimensions.setOnAction(event -> {
@@ -215,24 +228,35 @@ public class ConnectFourGUI extends Application {
         });
     }
 
+    private void setFeedback(Integer gameState, int column) {
+        switch (gameState) {
+            case 1:
+                feedback.setText("Red Won!");
+                break;
+            case -1:
+                feedback.setText("Black won!");
+                break;
+            case 0:
+                feedback.setText("Draw");
+                break;
+            case null:
+                feedback.setText("Token placed in column " + (column + 1) + ".");
+                break;
+            default:
+                break;
+        }
+    }
     /** Requests a move, reports whether it succeeded, and redraws the current state. */
     private void placeToken(int column) {
         if (engine.placeToken(column)) {
-            switch (engine.gameState()) {
-                case 1:
-                    feedback.setText("Red Won!");
-                    break;
-                case -1:
-                    feedback.setText("Black won!");
-                    break;
-                case 0:
-                    feedback.setText("Draw");
-                    break;
-                case null:
-                    feedback.setText("Token placed in column " + (column + 1) + ".");
-                    break;
-                default:
-                    break;
+            setFeedback(engine.gameState(), column);
+            if (engine.gameState() == null) {
+                // If the game is not over, let the AI make its move.
+                Integer aiColumn = engine.abSearch(searchDepth);
+                if (aiColumn != null) {
+                    engine.placeToken(aiColumn);
+                    setFeedback(engine.gameState(), aiColumn);
+                }
             }
         } else {
             feedback.setText("Column " + (column + 1) + " is full or game is over.");
