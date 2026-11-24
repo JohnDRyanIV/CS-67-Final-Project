@@ -186,36 +186,32 @@ public class GameEngine {
         // The last element of the array is the number of windows that are available to either player
         double[] weights = new double[position.getNumRows() * position.getNumColumns()+1];
 
-        
-        // First determine how valuable each point is
+    
         for (int[] window: position.windows()){
-            weights[window[0]] += 1;
-        }
-        // Then determine who dominates and if the window is blocked
-        for (int[] window: position.windows()){
-            int side = 0;
+            int side = player;
             for (int idx: window){
                 int r = idx / position.getNumColumns(), c = idx % position.getNumColumns();
                 Token tok = position.getToken(r, c);
                 if (tok == null){
                     continue;
                 }
-                if (side != 0 && side/Math.abs(side) != tok.getColor()){
-                    // Blocked window, no one can win here
-                    weights[window[0]] -= 1;
+                // No chance here
+                if (player != tok.getColor()){
+                    side = 0;
                     break;
                 }
-                side += tok.getColor();
             }
-            weights[weights.length-1] += 1;
-            // Favor fuller windows
-            // weights[window[0]] += Math.abs(side)/position.getConnect();
             if (side == 0){
-                weights[weights.length-1] += 1; // Count the number of windows that are available
-                weights[window[0]] *= 0.1; // Empty window is less valuable than a window dominated by one player
+                continue;
             }
-            else if (side/Math.abs(side) != player){
-                weights[window[0]] *= -2; // Opponent's window is bad for us
+            for (int idx: window){
+                int r = idx / position.getNumColumns(), c = idx % position.getNumColumns();
+                Token tok = position.getToken(r, c);
+                if (tok == null){
+                    weights[idx] += 1/board.getConnect(); // Empty cell is less valuable than a cell dominated by one player
+                } else {
+                    weights[idx] += 1; // Cell dominated by one player is more valuable
+                }
             }
         }
         return weights;
@@ -235,7 +231,7 @@ public class GameEngine {
             score += weights[i];
         }
         // Normalize the score by the number of cells to keep it in a reasonable range
-        return score/weights[weights.length-1];
+        return score;
     }
 
     /**
